@@ -35,7 +35,8 @@ RTTController::RTTController(void)
 	m_bUsePostMessageToSendKey		= FALSE;
 	m_bUsePostMessageToMouseDrag	= TRUE;
 	m_millisecSleepAfterKeyDown		= 30;
-	m_ctrl = m_alt = m_shift = m_bSyskeyDown = FALSE;
+	m_ctrl = m_shift = m_bSyskeyDown = FALSE;
+	m_alt = TRUE;
 
 	ZeroMemory(&m_mouseMessage, sizeof(m_mouseMessage));
 	m_mouseMessage.dragButton = DragNONE;
@@ -205,6 +206,8 @@ void RTTController::Execute(LPCSTR szCommand, double deltaX, double deltaY)
 	HWND tmpWnd = GetForegroundWindow();
 	if (tmpWnd != m_hTargetTopWnd) {
 		m_hTargetTopWnd = tmpWnd;
+		Sleep(0);
+		return;
 	}
 
 	// 実際に仮想キー・仮想マウス操作を行う子ウィンドウの取得
@@ -462,17 +465,14 @@ BOOL RTTController::IsModKeysDown(void)
 		}
 
 		if (m_ctrl && !IsKeyDown(VK_CONTROL)) {
-			OutputDebugString(_T("Control RETRY\n"));
 			sleepInterval *= 2;
 			continue;
 		}
 		if (m_alt && !IsKeyDown(VK_MENU)) {
-			OutputDebugString(_T("Alt RETRY\n"));
 			sleepInterval *= 2;
 			continue;
 		}
 		if (m_shift && !IsKeyDown(VK_SHIFT)) {
-			OutputDebugString(_T("Shift RETRY\n"));
 			sleepInterval *= 2;
 			continue;
 		}
@@ -491,9 +491,7 @@ BOOL RTTController::IsModKeysDown(void)
 
 void RTTController::ModKeyDown(void)
 {
-	//OutputDebugString(_T("ModKeyDown\n"));
 	//if (!m_bSyskeyDown) {
-		//OutputDebugString(_T("TRY\n"));
 		DWORD dwBuf = 0;
 		HWND hForeground = GetForegroundWindow();
 
@@ -525,19 +523,15 @@ void RTTController::ModKeyDown(void)
 		}
 		m_bSyskeyDown = IsModKeysDown();
 		if (!m_bSyskeyDown) {
-			OutputDebugString(_T("TIMEOUT\n"));
 			TCHAR szError[BUFFER_SIZE];
 			_stprintf_s(szError, _countof(szError), _T("修飾キーが押されませんでした[タイムアウト]。") );
 			LogDebugMessage(Log_Error, szError);
 		}
-	//} else {
-	//	OutputDebugString(_T("PRESSED\n"));
 	//}
 }
 
 void RTTController::ModKeyUp(void)
 {
-	//OutputDebugString(_T("ModKeyUp\n"));
 	//if (m_bSyskeyDown) {
 		if (!SetForegroundWindow(m_hTargetTopWnd)) {
 			OutputDebugString(_T("SetForegroundWindow -> FALSE\n"));

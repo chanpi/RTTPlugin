@@ -55,7 +55,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>ws2_32.lib;I4C3DKeysHook.lib;VirtualMotion.lib;Miscellaneous.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\I4C3DDriver\Release;C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\Miscellaneous\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\I4C3DKeysHook\Release;C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\I4C3DDriver\Release;C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\Miscellaneous\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -75,7 +75,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>ws2_32.lib;I4C3DKeysHook.lib;VirtualMotion.lib;Miscellaneous.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\I4C3DDriver\Release;C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\Miscellaneous\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\I4C3DKeysHook\Release;C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\I4C3DDriver\Release;C:\Documents and Settings\Administrator\My Documents\Visual Studio 2010\Projects\Miscellaneous\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
