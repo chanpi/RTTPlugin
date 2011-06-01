@@ -250,24 +250,23 @@ void RTTController::Execute(LPCSTR szCommand, double deltaX, double deltaY)
 void RTTController::TumbleExecute(int deltaX, int deltaY)
 {
 	// PostMessageでマウスドラッグ
-	//VMMouseMessage mouseMessage = {0};
 	//if (!CheckTargetState()) {
 	//	return;
 	//}
-	//mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
-	//mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-	//mouseMessage.dragButton		= LButtonDrag;
-	//mouseMessage.dragStartPos	= m_currentPos;
+	//m_mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
+	//m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+	//m_mouseMessage.dragButton		= LButtonDrag;
+	//m_mouseMessage.dragStartPos	= m_currentPos;
 	//m_currentPos.x				+= deltaX;
 	//m_currentPos.y				+= deltaY;
-	//mouseMessage.dragEndPos		= m_currentPos;
+	//m_mouseMessage.dragEndPos		= m_currentPos;
 	//if (m_ctrl) {
-	//	mouseMessage.uKeyState = MK_CONTROL;
+	//	m_mouseMessage.uKeyState = MK_CONTROL;
 	//}
 	//if (m_shift) {
-	//	mouseMessage.uKeyState |= MK_SHIFT;
+	//	m_mouseMessage.uKeyState |= MK_SHIFT;
 	//}
-	//VMMouseDrag(&mouseMessage);
+	//VMMouseDrag(&m_mouseMessage);
 
 	// PostMessageでマウスムーブ
 	//if (m_mouseMessage.dragButton != LButtonDrag) {
@@ -302,22 +301,21 @@ void RTTController::TumbleExecute(int deltaX, int deltaY)
 	//VMMouseMove(&m_mouseMessage);
 
 	// SendInput
-	m_bUsePostMessageToMouseDrag = FALSE;
 	//VMMouseEvent(NULL, 0, TRUE, FALSE);
 	VMMouseClick(&m_mouseMessage, TRUE);
 	if (CheckTargetState()) {
-		VMMouseMessage mouseMessage = {0};
-		mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
-		mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-		mouseMessage.dragButton		= LButtonDrag;
-		mouseMessage.dragStartPos	= m_currentPos;
-		m_currentPos.x				+= deltaX;
-		m_currentPos.y				+= deltaY;
+		m_bUsePostMessageToMouseDrag	= FALSE;
+		m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+		m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+		m_mouseMessage.dragButton		= LButtonDrag;
+		m_mouseMessage.dragStartPos		= m_currentPos;
+		m_currentPos.x					+= deltaX;
+		m_currentPos.y					+= deltaY;
 
-		mouseMessage.dragEndPos		= m_currentPos;
-		//VMMouseMove(&mouseMessage, 2);
-		//VMMouseEvent(&mouseMessage, 2, FALSE, FALSE);
-		VMMouseDrag(&mouseMessage, 2);
+		m_mouseMessage.dragEndPos		= m_currentPos;
+		//VMMouseMove(&m_mouseMessage, 2);
+		//VMMouseEvent(&m_mouseMessage, 2, FALSE, FALSE);
+		VMMouseDrag(&m_mouseMessage, 2);
 	}
 }
 
@@ -332,6 +330,7 @@ void RTTController::TrackExecute(int deltaX, int deltaY)
 	if (!CheckTargetState()) {
 		return;
 	}
+	m_bUsePostMessageToMouseDrag	= TRUE;
 	m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
 	m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
 	m_mouseMessage.dragStartPos		= m_currentPos;
@@ -351,26 +350,27 @@ void RTTController::TrackExecute(int deltaX, int deltaY)
 		VMMouseClick(&m_mouseMessage, FALSE);
 	}
 	VMMouseMove(&m_mouseMessage);
+
 	//VMMouseMessage mouseMessage = {0};
 	//if (!CheckTargetState()) {
 	//	return;
 	//}
 
-	//mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
-	//mouseMessage.hTargetWnd		= m_hTargetTopWnd;
-	//mouseMessage.dragButton		= MButtonDrag;
-	//mouseMessage.dragStartPos	= m_currentPos;
+	//m_mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
+	//m_mouseMessage.hTargetWnd		= m_hTargetTopWnd;
+	//m_mouseMessage.dragButton		= MButtonDrag;
+	//m_mouseMessage.dragStartPos	= m_currentPos;
 	//m_currentPos.x				+= deltaX;
 	//m_currentPos.y				+= deltaY;
 
-	//mouseMessage.dragEndPos		= m_currentPos;
+	//m_mouseMessage.dragEndPos		= m_currentPos;
 	//if (m_ctrl) {
-	//	mouseMessage.uKeyState = MK_CONTROL;
+	//	m_mouseMessage.uKeyState = MK_CONTROL;
 	//}
 	//if (m_shift) {
-	//	mouseMessage.uKeyState |= MK_SHIFT;
+	//	m_mouseMessage.uKeyState |= MK_SHIFT;
 	//}
-	//VMMouseDrag(&mouseMessage);
+	//VMMouseDrag(&m_mouseMessage);
 }
 
 void RTTController::DollyExecute(int deltaX, int deltaY)
@@ -385,6 +385,7 @@ void RTTController::DollyExecute(int deltaX, int deltaY)
 	if (!CheckTargetState()) {
 		return;
 	}
+	m_bUsePostMessageToMouseDrag	= TRUE;
 	m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
 	m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
 	m_mouseMessage.dragStartPos		= m_currentPos;
@@ -409,21 +410,21 @@ void RTTController::DollyExecute(int deltaX, int deltaY)
 	//	return;
 	//}
 
-	//mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
-	//mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-	//mouseMessage.dragButton		= RButtonDrag;
-	//mouseMessage.dragStartPos	= m_currentPos;
+	//m_mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
+	//m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+	//m_mouseMessage.dragButton		= RButtonDrag;
+	//m_mouseMessage.dragStartPos	= m_currentPos;
 	//m_currentPos.x				+= deltaX;
 	//m_currentPos.y				+= deltaY;
 	//
-	//mouseMessage.dragEndPos		= m_currentPos;
+	//m_mouseMessage.dragEndPos		= m_currentPos;
 	//if (m_ctrl) {
-	//	mouseMessage.uKeyState = MK_CONTROL;
+	//	m_mouseMessage.uKeyState = MK_CONTROL;
 	//}
 	//if (m_shift) {
-	//	mouseMessage.uKeyState |= MK_SHIFT;
+	//	m_mouseMessage.uKeyState |= MK_SHIFT;
 	//}
-	//VMMouseDrag(&mouseMessage);
+	//VMMouseDrag(&m_mouseMessage);
 }
 
 //void RTTController::HotkeyExecute(I4C3DContext* pContext, PCTSTR szCommand) const
@@ -491,7 +492,7 @@ BOOL RTTController::IsModKeysDown(void)
 
 void RTTController::ModKeyDown(void)
 {
-	//if (!m_bSyskeyDown) {
+	if (!m_bSyskeyDown) {
 		DWORD dwBuf = 0;
 		HWND hForeground = GetForegroundWindow();
 
@@ -527,12 +528,12 @@ void RTTController::ModKeyDown(void)
 			_stprintf_s(szError, _countof(szError), _T("修飾キーが押されませんでした[タイムアウト]。") );
 			LogDebugMessage(Log_Error, szError);
 		}
-	//}
+	}
 }
 
 void RTTController::ModKeyUp(void)
 {
-	//if (m_bSyskeyDown) {
+	if (m_bSyskeyDown) {
 		if (!SetForegroundWindow(m_hTargetTopWnd)) {
 			OutputDebugString(_T("SetForegroundWindow -> FALSE\n"));
 		}
@@ -553,7 +554,7 @@ void RTTController::ModKeyUp(void)
 		}
 		m_bSyskeyDown = FALSE;
 		m_pCursor->RestoreCursor();
-	//}
+	}
 }
 
 
