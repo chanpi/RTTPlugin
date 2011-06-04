@@ -34,8 +34,7 @@ RTTController::RTTController(void)
 	m_fDollyRate		= 1;
 	m_bUsePostMessageToSendKey		= FALSE;
 	m_bUsePostMessageToMouseDrag	= TRUE;
-	m_ctrl = m_shift = m_bSyskeyDown = FALSE;
-	m_alt = TRUE;
+	m_ctrl = m_alt = m_shift = m_bSyskeyDown = FALSE;
 
 	ZeroMemory(&m_mouseMessage, sizeof(m_mouseMessage));
 	m_mouseMessage.dragButton = DragNONE;
@@ -78,9 +77,11 @@ BOOL RTTController::Initialize(LPCSTR szBuffer, char* termination)
 	sscanf_s(szBuffer, g_initCommandFormat, tmpCommand,	sizeof(tmpCommand), szModKeys, sizeof(szModKeys), &m_fTumbleRate, &m_fTrackRate, &m_fDollyRate, termination);
 	if (!m_fTumbleRate) {
 		m_fTumbleRate = 1.0;
-	} else if (!m_fTrackRate){
+	}
+	if (!m_fTrackRate){
 		m_fTrackRate = 1.0;
-	} else if (!m_fDollyRate) {
+	}
+	if (!m_fDollyRate) {
 		m_fDollyRate = 1.0;
 	}
 
@@ -105,6 +106,7 @@ BOOL RTTController::Initialize(LPCSTR szBuffer, char* termination)
 BOOL RTTController::InitializeModifierKeys(PCSTR szModifierKeys)
 {
 	if (_strcmpi(szModifierKeys, "NULL") == 0 || szModifierKeys == NULL) {
+		LogDebugMessage(Log_Error, _T("修飾キーが指定されなかったため、Altキーに設定しました。"));
 		m_alt = TRUE;
 		AddHookedKeyCode(VK_MENU);
 		return TRUE;
@@ -256,7 +258,7 @@ void RTTController::Execute(HWND hWnd, LPCSTR szCommand, double deltaX, double d
 
 void RTTController::TumbleExecute(int deltaX, int deltaY)
 {
-	// PostMessageでマウスドラッグ
+	//// PostMessageでマウスドラッグ
 	//if (!CheckTargetState()) {
 	//	return;
 	//}
@@ -309,25 +311,47 @@ void RTTController::TumbleExecute(int deltaX, int deltaY)
 	//}
 	//VMMouseMove(&m_mouseMessage);
 
-	if (CheckTargetState()) {
-		RECT windowRect = {0};
-		AdjustCursorPos(&windowRect);
+	if (m_alt) {
+		if (CheckTargetState()) {
+			RECT windowRect = {0};
+			AdjustCursorPos(&windowRect);
 
-		m_bUsePostMessageToMouseDrag	= FALSE;
-		m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-		m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-		m_mouseMessage.dragButton		= LButtonDrag;
+			m_bUsePostMessageToMouseDrag	= FALSE;
+			m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+			m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+			m_mouseMessage.dragButton		= LButtonDrag;
+			m_mouseMessage.dragStartPos.x = m_currentPos.x + windowRect.left;
+			m_mouseMessage.dragStartPos.y = m_currentPos.y + windowRect.top;
+			//m_mouseMessage.dragStartPos		= m_currentPos;
+			m_currentPos.x					+= deltaX;
+			m_currentPos.y					+= deltaY;
 
-		m_mouseMessage.dragStartPos.x = m_currentPos.x + windowRect.left;
-		m_mouseMessage.dragStartPos.y = m_currentPos.y + windowRect.top;
+			m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
+			m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+			VMMouseDrag(&m_mouseMessage, 2);
+		}
+	} else {
+		if (CheckTargetState()) {
+			AdjustCursorPos(NULL);
 
-		//m_mouseMessage.dragStartPos		= m_currentPos;
-		m_currentPos.x					+= deltaX;
-		m_currentPos.y					+= deltaY;
+			m_bUsePostMessageToMouseDrag	= TRUE;
+			m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+			m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+			m_mouseMessage.dragButton		= LButtonDrag;
+			m_mouseMessage.dragStartPos		= m_currentPos;
+			m_currentPos.x					+= deltaX;
+			m_currentPos.y					+= deltaY;
 
-		m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
-		m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
-		VMMouseDrag(&m_mouseMessage, 2);
+			m_mouseMessage.dragEndPos		= m_currentPos;
+			m_mouseMessage.uKeyState		= MK_LBUTTON;
+			if (m_ctrl) {
+				m_mouseMessage.uKeyState	|= MK_CONTROL;
+			}
+			if (m_shift) {
+				m_mouseMessage.uKeyState	|= MK_SHIFT;
+			}
+			VMMouseDrag(&m_mouseMessage);
+		}
 	}
 }
 
@@ -335,9 +359,10 @@ void RTTController::TrackExecute(int deltaX, int deltaY)
 {
 	if (CheckTargetState()) {
 		AdjustCursorPos(NULL);
+
 		m_bUsePostMessageToMouseDrag	= TRUE;
 		m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-		m_mouseMessage.hTargetWnd		= m_hTargetTopWnd;
+		m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
 		m_mouseMessage.dragButton		= MButtonDrag;
 		m_mouseMessage.dragStartPos		= m_currentPos;
 		m_currentPos.x					+= deltaX;
