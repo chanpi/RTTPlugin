@@ -320,9 +320,8 @@ void RTTController::TumbleExecute(int deltaX, int deltaY)
 			m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
 			m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
 			m_mouseMessage.dragButton		= LButtonDrag;
-			m_mouseMessage.dragStartPos.x = m_currentPos.x + windowRect.left;
-			m_mouseMessage.dragStartPos.y = m_currentPos.y + windowRect.top;
-			//m_mouseMessage.dragStartPos		= m_currentPos;
+			m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
+			m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
 			m_currentPos.x					+= deltaX;
 			m_currentPos.y					+= deltaY;
 
