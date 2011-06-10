@@ -50,10 +50,10 @@
     <ClCompile Include="RTTPlugin.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="RTTController.cpp">
+    <ClCompile Include="I4C3DCursor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="I4C3DCursor.cpp">
+    <ClCompile Include="RTTController.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

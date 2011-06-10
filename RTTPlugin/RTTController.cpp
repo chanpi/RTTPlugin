@@ -4,8 +4,10 @@
 #include "I4C3DCommon.h"
 #include "I4C3DCursor.h"
 #include "Miscellaneous.h"
+#include <math.h>
+#include <float.h>
 
-static const int BUFFER_SIZE = 256;
+extern const int BUFFER_SIZE = 256;
 
 #define MOUSE_EVENT_X(x)    ((x) * (65535 / ::GetSystemMetrics(SM_CXSCREEN)))
 #define MOUSE_EVENT_Y(y)    ((y) * (65535 / ::GetSystemMetrics(SM_CYSCREEN)))
@@ -29,9 +31,9 @@ RTTController::RTTController(void)
 	m_currentPos.y		= 0;
 	m_DisplayWidth		= GetSystemMetrics(SM_CXSCREEN);
 	m_DisplayHeight		= GetSystemMetrics(SM_CYSCREEN);
-	m_fTumbleRate		= 1;
-	m_fTrackRate		= 1;
-	m_fDollyRate		= 1;
+	m_fTumbleRate		= 0;
+	m_fTrackRate		= 0;
+	m_fDollyRate		= 0;
 	m_bUsePostMessageToSendKey		= FALSE;
 	m_bUsePostMessageToMouseDrag	= TRUE;
 	m_ctrl = m_alt = m_shift = m_bSyskeyDown = FALSE;
@@ -74,15 +76,21 @@ BOOL RTTController::Initialize(LPCSTR szBuffer, char* termination)
 	char tmpCommand[BUFFER_SIZE] = {0};
 	char szModKeys[BUFFER_SIZE] = {0};
 
-	sscanf_s(szBuffer, g_initCommandFormat, tmpCommand,	sizeof(tmpCommand), szModKeys, sizeof(szModKeys), &m_fTumbleRate, &m_fTrackRate, &m_fDollyRate, termination);
-	if (!m_fTumbleRate) {
+	sscanf_s(szBuffer, g_initCommandFormat, tmpCommand,	sizeof(tmpCommand), szModKeys, sizeof(szModKeys), &m_fTumbleRate, &m_fTrackRate, &m_fDollyRate, termination, sizeof(*termination));
+	if (fabs(m_fTumbleRate - 0.0) < DBL_EPSILON) {
 		m_fTumbleRate = 1.0;
 	}
-	if (!m_fTrackRate){
+	if (fabs(m_fTrackRate - 0.0) < DBL_EPSILON) {
 		m_fTrackRate = 1.0;
 	}
-	if (!m_fDollyRate) {
+	if (fabs(m_fDollyRate - 0.0) < DBL_EPSILON) {
 		m_fDollyRate = 1.0;
+	}
+
+	{
+		TCHAR szBuf[32];
+		_stprintf_s(szBuf, 32, _T("tum:%.2f, tra:%.2f dol:%.2f\n"), m_fTumbleRate, m_fTrackRate, m_fDollyRate);
+		OutputDebugString(szBuf);
 	}
 
 	return InitializeModifierKeys(szModKeys);
@@ -154,6 +162,7 @@ BOOL RTTController::GetTargetChildWnd(void)
 	m_hKeyInputWnd = NULL;
 	EnumChildWindows(m_hTargetTopWnd, EnumChildProcForKeyInput, (LPARAM)&m_hKeyInputWnd);
 	if (m_hKeyInputWnd == NULL) {
+		LogDebugMessage(Log_Error, _T("キー入力ウィンドウが取得できません。<RTTController::GetTargetChildWnd>"));
 		return FALSE;
 	}
 
@@ -161,29 +170,33 @@ BOOL RTTController::GetTargetChildWnd(void)
 	m_hMouseInputWnd = NULL;
 	EnumChildWindows(m_hKeyInputWnd, EnumChildProcForMouseInput, (LPARAM)&m_hMouseInputWnd);
 	if (m_hMouseInputWnd == NULL) {
+		LogDebugMessage(Log_Error, _T("マウス入力ウィンドウが取得できません。<RTTController::GetTargetChildWnd>"));
 		return FALSE;
 	}
 	return TRUE;
 }
 
-BOOL RTTController::CheckTargetState(void)
-{
-	if (m_hTargetTopWnd == NULL) {
-		//ReportError(_T("ターゲットウィンドウが取得できません。<RTTController::CheckTargetState>"));
-		LogDebugMessage(Log_Error, _T("ターゲットウィンドウが取得できません。<RTTController::CheckTargetState>"));
-
-	} else if (m_hKeyInputWnd == NULL) {
-		LogDebugMessage(Log_Error, _T("キー入力ウィンドウが取得できません。<RTTController::CheckTargetState>"));
-
-	} else if (m_hMouseInputWnd == NULL) {
-		LogDebugMessage(Log_Error, _T("マウス入力ウィンドウが取得できません。<RTTController::CheckTargetState>"));
-
-	} else {
-		return TRUE;
-	}
-
-	return FALSE;
-}
+// コメントアウト 2011.06.10
+// GetTargetChildWndとで二重チェックになってしまうため。
+// GetTargetChildWndとAdjustCursorPosを使用
+//BOOL RTTController::CheckTargetState(void)
+//{
+//	if (m_hTargetTopWnd == NULL) {
+//		//ReportError(_T("ターゲットウィンドウが取得できません。<RTTController::CheckTargetState>"));
+//		LogDebugMessage(Log_Error, _T("ターゲットウィンドウが取得できません。<RTTController::CheckTargetState>"));
+//
+//	} else if (m_hKeyInputWnd == NULL) {
+//		LogDebugMessage(Log_Error, _T("キー入力ウィンドウが取得できません。<RTTController::CheckTargetState>"));
+//
+//	} else if (m_hMouseInputWnd == NULL) {
+//		LogDebugMessage(Log_Error, _T("マウス入力ウィンドウが取得できません。<RTTController::CheckTargetState>"));
+//
+//	} else {
+//		return TRUE;
+//	}
+//
+//	return FALSE;
+//}
 
 void RTTController::AdjustCursorPos(RECT* pWindowRect)
 {
@@ -224,8 +237,6 @@ void RTTController::Execute(HWND hWnd, LPCSTR szCommand, double deltaX, double d
 		return;
 	}
 
-	//ShowWindow(m_hTargetParentWnd, SW_SHOWMAXIMIZED);
-
 	if (_strcmpi(szCommand, COMMAND_TUMBLE) == 0) {
 		ModKeyDown();
 		if (m_bSyskeyDown) {
@@ -256,153 +267,114 @@ void RTTController::Execute(HWND hWnd, LPCSTR szCommand, double deltaX, double d
 	}
 }
 
+/**
+ * @brief
+ * Tumbleコマンドを送信します。マウス操作はSendInputを使用します。
+ * 
+ * Tumbleコマンドを送信します。マウス操作はSendInputを使用します。
+ * 本バージョンでうまく動作しない場合は、RTTDeltaGen_OLD.cppを使用してください
+ * （修飾キーがAltとCtrlのときとで処理を分岐してあります）。
+ */
 void RTTController::TumbleExecute(int deltaX, int deltaY)
 {
-	//// PostMessageでマウスドラッグ
-	//if (!CheckTargetState()) {
-	//	return;
+	//if (CheckTargetState()) {
+		RECT windowRect = {0};
+		AdjustCursorPos(&windowRect);
+
+		m_bUsePostMessageToMouseDrag	= FALSE;
+		m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+		m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+		m_mouseMessage.dragButton		= LButtonDrag;
+		m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
+		m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
+		m_currentPos.x					+= deltaX;
+		m_currentPos.y					+= deltaY;
+
+		m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
+		m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+		VMMouseDrag(&m_mouseMessage, 2);
 	//}
-	//m_mouseMessage.bUsePostMessage = m_bUsePostMessageToMouseDrag;
-	//m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-	//m_mouseMessage.dragButton		= LButtonDrag;
-	//m_mouseMessage.dragStartPos	= m_currentPos;
-	//m_currentPos.x				+= deltaX;
-	//m_currentPos.y				+= deltaY;
-	//m_mouseMessage.dragEndPos		= m_currentPos;
-
-	//m_mouseMessage.uKeyState = MK_LBUTTON;
-	//if (m_ctrl) {
-	//	m_mouseMessage.uKeyState |= MK_CONTROL;
-	//}
-	//if (m_shift) {
-	//	m_mouseMessage.uKeyState |= MK_SHIFT;
-	//}
-	//VMMouseDrag(&m_mouseMessage);
-
-	//// PostMessageでマウスムーブ
-	//if (m_mouseMessage.dragButton != LButtonDrag) {
-	//	if (m_mouseMessage.dragButton != DragNONE) {
-	//		VMMouseClick(&m_mouseMessage, TRUE);
-	//		m_mouseMessage.dragButton = DragNONE;
-	//	}
-	//}
-
-	//if (!CheckTargetState()) {
-	//	return;
-	//}
-	//m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-	//m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-	//m_mouseMessage.dragStartPos		= m_currentPos;
-	//m_currentPos.x					+= deltaX;
-	//m_currentPos.y					+= deltaY;
-	//m_mouseMessage.dragEndPos		= m_currentPos;
-
-	//m_mouseMessage.uKeyState		= MK_LBUTTON;
-	//if (m_ctrl) {
-	//	m_mouseMessage.uKeyState |= MK_CONTROL;
-	//}
-	//if (m_shift) {
-	//	m_mouseMessage.uKeyState |= MK_SHIFT;
-	//}
-
-	//if (m_mouseMessage.dragButton != LButtonDrag) {
-	//	m_mouseMessage.dragButton = LButtonDrag;
-	//	VMMouseClick(&m_mouseMessage, FALSE);
-	//}
-	//VMMouseMove(&m_mouseMessage);
-
-	if (m_alt) {
-		if (CheckTargetState()) {
-			RECT windowRect = {0};
-			AdjustCursorPos(&windowRect);
-
-			m_bUsePostMessageToMouseDrag	= FALSE;
-			m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-			m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-			m_mouseMessage.dragButton		= LButtonDrag;
-			m_mouseMessage.dragStartPos.x = m_currentPos.x + windowRect.left;
-			m_mouseMessage.dragStartPos.y = m_currentPos.y + windowRect.top;
-			//m_mouseMessage.dragStartPos		= m_currentPos;
-			m_currentPos.x					+= deltaX;
-			m_currentPos.y					+= deltaY;
-
-			m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
-			m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
-			VMMouseDrag(&m_mouseMessage, 2);
-		}
-	} else {
-		if (CheckTargetState()) {
-			AdjustCursorPos(NULL);
-
-			m_bUsePostMessageToMouseDrag	= TRUE;
-			m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-			m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-			m_mouseMessage.dragButton		= LButtonDrag;
-			m_mouseMessage.dragStartPos		= m_currentPos;
-			m_currentPos.x					+= deltaX;
-			m_currentPos.y					+= deltaY;
-
-			m_mouseMessage.dragEndPos		= m_currentPos;
-			m_mouseMessage.uKeyState		= MK_LBUTTON;
-			if (m_ctrl) {
-				m_mouseMessage.uKeyState	|= MK_CONTROL;
-			}
-			if (m_shift) {
-				m_mouseMessage.uKeyState	|= MK_SHIFT;
-			}
-			VMMouseDrag(&m_mouseMessage);
-		}
-	}
 }
 
 void RTTController::TrackExecute(int deltaX, int deltaY)
 {
-	if (CheckTargetState()) {
-		AdjustCursorPos(NULL);
+	////if (CheckTargetState()) {
+	//	AdjustCursorPos(NULL);
 
-		m_bUsePostMessageToMouseDrag	= TRUE;
-		m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-		m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-		m_mouseMessage.dragButton		= MButtonDrag;
-		m_mouseMessage.dragStartPos		= m_currentPos;
-		m_currentPos.x					+= deltaX;
-		m_currentPos.y					+= deltaY;
+	//	m_bUsePostMessageToMouseDrag	= TRUE;
+	//	m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+	//	m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+	//	m_mouseMessage.dragButton		= MButtonDrag;
+	//	m_mouseMessage.dragStartPos		= m_currentPos;
+	//	m_currentPos.x					+= deltaX;
+	//	m_currentPos.y					+= deltaY;
 
-		m_mouseMessage.dragEndPos		= m_currentPos;
-		m_mouseMessage.uKeyState		= MK_MBUTTON;
-		if (m_ctrl) {
-			m_mouseMessage.uKeyState	|= MK_CONTROL;
-		}
-		if (m_shift) {
-			m_mouseMessage.uKeyState	|= MK_SHIFT;
-		}
-		VMMouseDrag(&m_mouseMessage);
-	}
+	//	m_mouseMessage.dragEndPos		= m_currentPos;
+	//	m_mouseMessage.uKeyState		= MK_MBUTTON;
+	//	if (m_ctrl) {
+	//		m_mouseMessage.uKeyState	|= MK_CONTROL;
+	//	}
+	//	if (m_shift) {
+	//		m_mouseMessage.uKeyState	|= MK_SHIFT;
+	//	}
+	//	VMMouseDrag(&m_mouseMessage);
+	////}
+	RECT windowRect = {0};
+	AdjustCursorPos(&windowRect);
+
+	m_bUsePostMessageToMouseDrag	= FALSE;
+	m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+	m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+	m_mouseMessage.dragButton		= MButtonDrag;
+	m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
+	m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
+	m_currentPos.x					+= deltaX;
+	m_currentPos.y					+= deltaY;
+
+	m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
+	m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+	VMMouseDrag(&m_mouseMessage);
 }
 
 void RTTController::DollyExecute(int deltaX, int deltaY)
 {
-	if (CheckTargetState()) {
-		AdjustCursorPos(NULL);
+	////if (CheckTargetState()) {
+	//	AdjustCursorPos(NULL);
 
-		m_bUsePostMessageToMouseDrag	= TRUE;
-		m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
-		m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
-		m_mouseMessage.dragButton		= RButtonDrag;
-		m_mouseMessage.dragStartPos		= m_currentPos;
-		m_currentPos.x					+= deltaX;
-		m_currentPos.y					+= deltaY;
-	
-		m_mouseMessage.dragEndPos		= m_currentPos;
-		m_mouseMessage.uKeyState		= MK_RBUTTON;
-		if (m_ctrl) {
-			m_mouseMessage.uKeyState	|= MK_CONTROL;
-		}
-		if (m_shift) {
-			m_mouseMessage.uKeyState	|= MK_SHIFT;
-		}
-		VMMouseDrag(&m_mouseMessage);
-	}
+	//	m_bUsePostMessageToMouseDrag	= TRUE;
+	//	m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+	//	m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+	//	m_mouseMessage.dragButton		= RButtonDrag;
+	//	m_mouseMessage.dragStartPos		= m_currentPos;
+	//	m_currentPos.x					+= deltaX;
+	//	m_currentPos.y					+= deltaY;
+	//
+	//	m_mouseMessage.dragEndPos		= m_currentPos;
+	//	m_mouseMessage.uKeyState		= MK_RBUTTON;
+	//	if (m_ctrl) {
+	//		m_mouseMessage.uKeyState	|= MK_CONTROL;
+	//	}
+	//	if (m_shift) {
+	//		m_mouseMessage.uKeyState	|= MK_SHIFT;
+	//	}
+	//	VMMouseDrag(&m_mouseMessage);
+	////}
+
+	RECT windowRect = {0};
+	AdjustCursorPos(&windowRect);
+
+	m_bUsePostMessageToMouseDrag	= FALSE;
+	m_mouseMessage.bUsePostMessage	= m_bUsePostMessageToMouseDrag;
+	m_mouseMessage.hTargetWnd		= m_hMouseInputWnd;
+	m_mouseMessage.dragButton		= RButtonDrag;
+	m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
+	m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
+	m_currentPos.x					+= deltaX;
+	m_currentPos.y					+= deltaY;
+
+	m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
+	m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+	VMMouseDrag(&m_mouseMessage);
 }
 
 //void RTTController::HotkeyExecute(I4C3DContext* pContext, PCTSTR szCommand) const
@@ -419,9 +391,8 @@ void RTTController::DollyExecute(int deltaX, int deltaY)
  * 
  * 登録した修飾キーが押されたか確認します。
  * 押されていない場合は、Sleepします。
- * Sleepは最大retryCount回行い、Sleep間隔は
- * 回を重ねるごとに2倍していきます。
- * （最大 [1 << retryCount] msecのSleep）
+ * キーフックを利用してキー押下メッセージが発生したかどうかを調べています。
+ * 対象プログラムでメッセージが処理される前のキー押下の判断です。
  * 
  * @remarks
  * I4C3DKeysHook.dllのIsAllKeysDown()関数でキー押下を確認します。
@@ -431,34 +402,24 @@ void RTTController::DollyExecute(int deltaX, int deltaY)
  */
 BOOL RTTController::IsModKeysDown(void)
 {
-	const int retryCount = 6;
-	int sleepInterval = 1;
-
 	int i = 0;
-	for (i = 0; i < retryCount; ++i) {
-		Sleep(sleepInterval);
-		{
-			TCHAR szBuf[32];
-			_stprintf_s(szBuf, 32, _T("%4d msec Sleep\n"), sleepInterval);
-			OutputDebugString(szBuf);
-		}
-
+	for (i = 0; i < waitModkeyDownCount; ++i) {
+		Sleep(1);
 		if (m_ctrl && !IsKeyDown(VK_CONTROL)) {
-			sleepInterval *= 2;
 			continue;
 		}
 		if (m_alt && !IsKeyDown(VK_MENU)) {
-			sleepInterval *= 2;
 			continue;
 		}
 		if (m_shift && !IsKeyDown(VK_SHIFT)) {
-			sleepInterval *= 2;
 			continue;
 		}
+
+		// 登録したキーは押されていた
 		break;
 	}
 
-	if (i < retryCount) {
+	if (i < waitModkeyDownCount) {
 		return TRUE;
 	} else {
 		return FALSE;
