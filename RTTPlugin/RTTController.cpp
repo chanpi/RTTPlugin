@@ -125,7 +125,7 @@ BOOL RTTController::InitializeModifierKeys(PCSTR szModifierKeys)
 		char szKey[BUFFER_SIZE] = {0};
 		pType = strchr(szModifierKeys, '+');
 		if (pType != NULL) {
-			strncpy_s(szKey, _countof(szKey), szModifierKeys, pType-szModifierKeys+1);
+			strncpy_s(szKey, _countof(szKey), szModifierKeys, pType-szModifierKeys);
 			szModifierKeys = pType+1;
 		} else {
 			strcpy_s(szKey, _countof(szKey), szModifierKeys);
@@ -256,14 +256,8 @@ void RTTController::Execute(HWND hWnd, LPCSTR szCommand, double deltaX, double d
 		}
 
 	} else {
-//#if _UNICODE || UNICODE
-//		TCHAR wszCommand[BUFFER_SIZE] = {0};
-//		MultiByteToWideChar(CP_ACP, 0, szCommand, -1, wszCommand, _countof(wszCommand));
-//		ModKeyUp();
-//		HotkeyExecute(pContext, wszCommand);
-//#else
-//		pContext->pController->HotkeyExecute(lpszCommand);
-//#endif
+		ModKeyUp();
+		PlayMacro(szCommand, m_hKeyInputWnd, m_bUsePostMessageToSendKey);
 	}
 }
 
@@ -287,11 +281,11 @@ void RTTController::TumbleExecute(int deltaX, int deltaY)
 		m_mouseMessage.dragButton		= LButtonDrag;
 		m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
 		m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
-		m_currentPos.x					+= deltaX;
-		m_currentPos.y					+= deltaY;
+		//m_currentPos.x					+= deltaX;
+		//m_currentPos.y					+= deltaY;
 
-		m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
-		m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+		m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left + deltaX;
+		m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top + deltaY;
 		VMMouseDrag(&m_mouseMessage, 2);
 	//}
 }
@@ -328,11 +322,11 @@ void RTTController::TrackExecute(int deltaX, int deltaY)
 	m_mouseMessage.dragButton		= MButtonDrag;
 	m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
 	m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
-	m_currentPos.x					+= deltaX;
-	m_currentPos.y					+= deltaY;
+	//m_currentPos.x					+= deltaX;
+	//m_currentPos.y					+= deltaY;
 
-	m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
-	m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+	m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left + deltaX;
+	m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top + deltaY;
 	VMMouseDrag(&m_mouseMessage);
 }
 
@@ -369,18 +363,14 @@ void RTTController::DollyExecute(int deltaX, int deltaY)
 	m_mouseMessage.dragButton		= RButtonDrag;
 	m_mouseMessage.dragStartPos.x	= m_currentPos.x + windowRect.left;
 	m_mouseMessage.dragStartPos.y	= m_currentPos.y + windowRect.top;
-	m_currentPos.x					+= deltaX;
-	m_currentPos.y					+= deltaY;
+	//m_currentPos.x					+= deltaX;
+	//m_currentPos.y					+= deltaY;
 
-	m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left;
-	m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top;
+	m_mouseMessage.dragEndPos.x = m_currentPos.x + windowRect.left + deltaX;
+	m_mouseMessage.dragEndPos.y = m_currentPos.y + windowRect.top + deltaY;
 	VMMouseDrag(&m_mouseMessage);
 }
 
-//void RTTController::HotkeyExecute(I4C3DContext* pContext, PCTSTR szCommand) const
-//{
-//	I4C3DControl::HotkeyExecute(pContext, m_hTargetTopWnd, szCommand);
-//}
 
 /**
  * @brief

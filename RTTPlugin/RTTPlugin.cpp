@@ -9,12 +9,22 @@
 #include <WinSock2.h>
 #include <ShellAPI.h>
 
+#include <cstdlib>	// 必要
+
+#if _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
+#define new  ::new( _NORMAL_BLOCK, __FILE__, __LINE__ )
+#endif
+
 #define MAX_LOADSTRING	100
 #define TIMER_ID		1
 
 const int BUFFER_SIZE = 256;
 static const PCSTR COMMAND_INIT	= "init";
 static const PCSTR COMMAND_EXIT	= "exit";
+static const PCSTR COMMAND_REGISTERMACRO	= "registermacro";
 
 // グローバル変数:
 HINSTANCE hInst;								// 現在のインターフェイス
@@ -41,7 +51,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	// TODO: ここにコードを挿入してください。
+#if DEBUG || _DEBUG
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	// TODO: ここにコードを挿入してください。
 	MSG msg;
 	HACCEL hAccelTable;
 
@@ -171,7 +185,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        この関数で、グローバル変数でインスタンス ハンドルを保存し、
 //        メイン プログラム ウィンドウを作成および表示します。
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitInstance(HINSTANCE hInstance, int /*nCmdShow*/)
 {
    HWND hWnd;
 
@@ -258,6 +272,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				} else if (_strcmpi(szCommand, COMMAND_EXIT) == 0) {
 					OutputDebugString(_T("exit\n"));
 					DestroyWindow(hWnd);
+
+				// マクロの登録
+				} else if (_strcmpi(szCommand, COMMAND_REGISTERMACRO) == 0) {
+					if (!controller.RegisterMacro(packet.szCommand, &cTermination)) {
+						_stprintf_s(szError, _countof(szError), _T("RTTコントローラのマクロの登録に失敗しています。"));
+						ReportError(szError);
+					}
+
+				// マクロの実行
+				} else {
+					controller.Execute(hTargetWnd, szCommand, 0, 0);
+					Sleep(1);
+					doCount = TRUE;
 				}
 			}
 		}
