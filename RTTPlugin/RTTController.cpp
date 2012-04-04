@@ -3,9 +3,16 @@
 #include "I4C3DKeysHook.h"
 #include "I4C3DCommon.h"
 #include "I4C3DCursor.h"
-#include "Miscellaneous.h"
+#include "Misc.h"
+#include "SharedConstants.h"
 #include <math.h>
 #include <float.h>
+
+#if UNICODE || _UNICODE
+static LPCTSTR g_FILE = __FILEW__;
+#else
+static LPCTSTR g_FILE = __FILE__;
+#endif
 
 extern const int BUFFER_SIZE = 256;
 
@@ -114,7 +121,7 @@ BOOL RTTController::Initialize(LPCSTR szBuffer, char* termination)
 BOOL RTTController::InitializeModifierKeys(PCSTR szModifierKeys)
 {
 	if (_strcmpi(szModifierKeys, "NULL") == 0 || szModifierKeys == NULL) {
-		LogDebugMessage(Log_Error, _T("修飾キーが指定されなかったため、Altキーに設定しました。"));
+		LoggingMessage(Log_Info, _T(MESSAGE_INFO_PLUGIN_ALT), GetLastError(), g_FILE, __LINE__);
 		m_alt = TRUE;
 		AddHookedKeyCode(VK_MENU);
 		return TRUE;
@@ -162,7 +169,7 @@ BOOL RTTController::GetTargetChildWnd(void)
 	m_hKeyInputWnd = NULL;
 	EnumChildWindows(m_hTargetTopWnd, EnumChildProcForKeyInput, (LPARAM)&m_hKeyInputWnd);
 	if (m_hKeyInputWnd == NULL) {
-		LogDebugMessage(Log_Error, _T("キー入力ウィンドウが取得できません。<RTTController::GetTargetChildWnd>"));
+		LoggingMessage(Log_Error, _T(MESSAGE_ERROR_WINDOW_MISSING), GetLastError(), g_FILE, __LINE__);
 		return FALSE;
 	}
 
@@ -170,7 +177,7 @@ BOOL RTTController::GetTargetChildWnd(void)
 	m_hMouseInputWnd = NULL;
 	EnumChildWindows(m_hKeyInputWnd, EnumChildProcForMouseInput, (LPARAM)&m_hMouseInputWnd);
 	if (m_hMouseInputWnd == NULL) {
-		LogDebugMessage(Log_Error, _T("マウス入力ウィンドウが取得できません。<RTTController::GetTargetChildWnd>"));
+		LoggingMessage(Log_Error, _T(MESSAGE_ERROR_WINDOW_MISSING), GetLastError(), g_FILE, __LINE__);
 		return FALSE;
 	}
 	return TRUE;
@@ -430,7 +437,8 @@ void RTTController::ModKeyDown(void)
 		}
 
 		if  (!m_pCursor->SetTransparentCursor()) {
-			LogDebugMessage(Log_Error, _T("透明カーソルへの変更に失敗しています。"));
+			LoggingMessage(Log_Error, _T(MESSAGE_ERROR_CURSOR_CHANGE), GetLastError(), g_FILE, __LINE__);
+		
 		}
 		m_bSyskeyDown = IsModKeysDown();
 		//if (!m_bSyskeyDown) {

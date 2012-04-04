@@ -1,4 +1,7 @@
 #pragma once
+
+#define CURSOR_FILE_NAME	 "transparent.cur"
+
 class I4C3DCursor
 {
 public:

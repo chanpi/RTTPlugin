@@ -3,9 +3,16 @@
 #include "I4C3DCommon.h"
 #include "VirtualMotion.h"
 #include "I4C3DKeysHook.h"
-#include "Miscellaneous.h"
+#include "Misc.h"
+#include "SharedConstants.h"
 #include <map>
 #include <string>
+
+#if UNICODE || _UNICODE
+static LPCTSTR g_FILE = __FILEW__;
+#else
+static LPCTSTR g_FILE = __FILE__;
+#endif
 
 using namespace std;
 
@@ -50,9 +57,7 @@ BOOL MacroPlugin::RegisterMacro(LPCSTR szBuffer, char* termination)
 
 	sscanf_s(szBuffer, g_registerMacroFormat, tmpCommand, sizeof(tmpCommand), macroName, sizeof(macroName), macroValue, sizeof(macroValue), termination, sizeof(*termination));
 	if (!AnalyzeMacro(macroName, macroValue)) {
-		char szError[BUFFER_SIZE];
-		sprintf_s(szError, _countof(szError), "キーマクロは登録されませんでした: [マクロ名: %s] [内容: %s]", macroName, macroValue);
-		LogDebugMessageA(Log_Error, szError);
+		LoggingMessage(Log_Error, _T(MESSAGE_ERROR_PLUGIN_MACRO), GetLastError(), g_FILE, __LINE__);
 		return FALSE;
 	}
 

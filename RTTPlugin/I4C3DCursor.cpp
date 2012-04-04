@@ -1,6 +1,14 @@
 #include "StdAfx.h"
 #include "I4C3DCursor.h"
-#include "Miscellaneous.h"
+#include "Misc.h"
+#include "SharedConstants.h"
+
+
+#if UNICODE || _UNICODE
+static LPCTSTR g_FILE = __FILEW__;
+#else
+static LPCTSTR g_FILE = __FILE__;
+#endif
 
 I4C3DCursor::I4C3DCursor(void)
 {
@@ -15,9 +23,10 @@ BOOL I4C3DCursor::SetTransparentCursor()
 {
 	HCURSOR hCursor;
 
-	hCursor = LoadCursorFromFile(_T("transparent.cur"));
+	hCursor = LoadCursorFromFile(_T(CURSOR_FILE_NAME));
 	if (hCursor == NULL) {
-		LogDebugMessage(Log_Error, _T("透明カーソルをロードできないため、カーソルの変更を行いません。"));
+		LoggingMessage(Log_Error, _T(MESSAGE_ERROR_CURSOR_MISSING), GetLastError(), g_FILE, __LINE__);
+
 		return FALSE;
 	}
 
