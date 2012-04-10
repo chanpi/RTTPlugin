@@ -19,11 +19,11 @@ I4C3DCursor::~I4C3DCursor(void)
 	RestoreCursor();
 }
 
-BOOL I4C3DCursor::SetTransparentCursor()
+BOOL I4C3DCursor::SetTransparentCursor(LPCTSTR szFilePath)
 {
-	HCURSOR hCursor;
+	HCURSOR hCursor = NULL;
 
-	hCursor = LoadCursorFromFile(_T(CURSOR_FILE_NAME));
+	hCursor = LoadCursorFromFile(szFilePath);
 	if (hCursor == NULL) {
 		LoggingMessage(Log_Error, _T(MESSAGE_ERROR_CURSOR_MISSING), GetLastError(), g_FILE, __LINE__);
 

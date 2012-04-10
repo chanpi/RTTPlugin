@@ -36,24 +36,14 @@ MacroPlugin::MacroPlugin(void)
 
 MacroPlugin::~MacroPlugin(void)
 {
-	map<string, MacroKey*>::iterator it = g_macroTable.begin();
-	MacroKey *tmp, *next = NULL;
-	for (; it != g_macroTable.end(); ++it) {
-		tmp = it->second;
-		while (tmp != NULL) {
-			next = tmp->next;
-			delete tmp;
-			tmp = next;
-		}
-	}
-	g_macroTable.clear();
+	CleanupMacro();
 }
 
 BOOL MacroPlugin::RegisterMacro(LPCSTR szBuffer, char* termination)
 {
-	char tmpCommand[BUFFER_SIZE] = {0};
-	char macroName[BUFFER_SIZE] = {0};
-	char macroValue[BUFFER_SIZE] = {0};
+	char tmpCommand[BUFFER_SIZE]	= {0};
+	char macroName[BUFFER_SIZE]		= {0};
+	char macroValue[BUFFER_SIZE]	= {0};
 
 	sscanf_s(szBuffer, g_registerMacroFormat, tmpCommand, sizeof(tmpCommand), macroName, sizeof(macroName), macroValue, sizeof(macroValue), termination, sizeof(*termination));
 	if (!AnalyzeMacro(macroName, macroValue)) {
@@ -83,6 +73,24 @@ void MacroPlugin::PlayMacro(LPCSTR macroName, HWND hKeyInputWnd, BOOL bUsePostMe
 			VMVirtualKeyUp(hKeyInputWnd, macro->uKeyCode);
 			macro = macro->next;
 		}
+	}
+}
+
+void MacroPlugin::CleanupMacro(void)
+{
+	if (!g_macroTable.empty()) {
+		map<string, MacroKey*>::iterator it = g_macroTable.begin();
+		MacroKey *tmp = NULL, *next = NULL;
+		for (; it != g_macroTable.end(); ++it) {
+			tmp = it->second;
+			while (tmp != NULL) {
+				next = tmp->next;
+				delete tmp;
+				tmp = next;
+				OutputDebugString(_T(">>>>>>delete\n"));
+			}
+		}
+		g_macroTable.clear();
 	}
 }
 
@@ -142,10 +150,23 @@ BOOL MacroPlugin::AnalyzeMacro(LPCSTR macroName, LPCSTR macroValue)
 		}
 
 		if (macro == NULL) {
-			g_macroTable.insert(map<string, MacroKey*>::value_type(macroName, (macro = new MacroKey)));
+			macro = new MacroKey;		// CleanupMacro‚Å‰ð•ú
+			if (macro == NULL) {
+				LoggingMessage(Log_Error, _T(MESSAGE_ERROR_MEMORY_INVALID), GetLastError(), g_FILE, __LINE__);
+				CleanupMacro();
+				return FALSE;
+			}
+			g_macroTable.insert(map<string, MacroKey*>::value_type(macroName, macro));
+			OutputDebugString(_T(">>>>>>new macro\n"));
 		} else {
-			macro->next = new MacroKey;
+			macro->next = new MacroKey;	// CleanupMacro‚Å‰ð•ú
+			if (macro->next == NULL) {
+				LoggingMessage(Log_Error, _T(MESSAGE_ERROR_MEMORY_INVALID), GetLastError(), g_FILE, __LINE__);
+				CleanupMacro();
+				return FALSE;
+			}
 			macro = macro->next;
+			OutputDebugString(_T(">>>>>>new macro\n"));
 		}
 		macro->uKeyCode = uKeyCode;
 		macro->next = NULL;

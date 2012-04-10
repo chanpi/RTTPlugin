@@ -29,6 +29,8 @@ const PCSTR COMMAND_TUMBLE	= "tumble";
 const PCSTR COMMAND_TRACK	= "track";
 const PCSTR COMMAND_DOLLY	= "dolly";
 
+extern TCHAR g_szCursorFilePath[];
+
 RTTController::RTTController(void)
 {
 	m_hTargetTopWnd		= NULL;
@@ -95,8 +97,8 @@ BOOL RTTController::Initialize(LPCSTR szBuffer, char* termination)
 	}
 
 	{
-		TCHAR szBuf[32];
-		_stprintf_s(szBuf, 32, _T("tum:%.2f, tra:%.2f dol:%.2f\n"), m_fTumbleRate, m_fTrackRate, m_fDollyRate);
+		TCHAR szBuf[64] = {0};
+		_stprintf_s(szBuf, _countof(szBuf), _T("tum:%.2f, tra:%.2f dol:%.2f\n"), m_fTumbleRate, m_fTrackRate, m_fDollyRate);
 		OutputDebugString(szBuf);
 	}
 
@@ -211,7 +213,7 @@ void RTTController::AdjustCursorPos(RECT* pWindowRect)
 	POINT tmpCurrentPos = m_currentPos;
 	ClientToScreen(m_hMouseInputWnd, &tmpCurrentPos);
 
-	RECT windowRect;
+	RECT windowRect = {0};
 	GetWindowRect(m_hMouseInputWnd, &windowRect);
 	if (WindowFromPoint(tmpCurrentPos) != m_hMouseInputWnd ||
 		tmpCurrentPos.x < windowRect.left+500 || windowRect.right-500 < tmpCurrentPos.x ||
@@ -221,7 +223,7 @@ void RTTController::AdjustCursorPos(RECT* pWindowRect)
 				m_mouseMessage.dragButton = DragNONE;
 			}
 
-			RECT rect;
+			RECT rect = {0};
 			GetClientRect(m_hMouseInputWnd, &rect);
 			m_currentPos.x = rect.left + (rect.right - rect.left) / 2;
 			m_currentPos.y = rect.top + (rect.bottom - rect.top) / 2;
@@ -436,7 +438,7 @@ void RTTController::ModKeyDown(void)
 			VMVirtualKeyDown(m_hKeyInputWnd, VK_SHIFT, m_bUsePostMessageToSendKey);
 		}
 
-		if  (!m_pCursor->SetTransparentCursor()) {
+		if  (!m_pCursor->SetTransparentCursor(g_szCursorFilePath)) {
 			LoggingMessage(Log_Error, _T(MESSAGE_ERROR_CURSOR_CHANGE), GetLastError(), g_FILE, __LINE__);
 		
 		}
@@ -477,7 +479,7 @@ void RTTController::ModKeyUp(void)
 
 BOOL CALLBACK EnumChildProcForKeyInput(HWND hWnd, LPARAM lParam)
 {
-	TCHAR szWindowTitle[BUFFER_SIZE];
+	TCHAR szWindowTitle[BUFFER_SIZE] = {0};
 	GetWindowText(hWnd, szWindowTitle, _countof(szWindowTitle));
 
 	if (!_tcsicmp(g_szChildWindowTitle, szWindowTitle) /*&& !_tcsicmp(_T("QWidget"), szClassTitle)*/) {
